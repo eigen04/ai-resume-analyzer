@@ -11,9 +11,9 @@
 	<groupId>com.example</groupId>
 	<artifactId>ai-resume-analyzer</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
+	<name>AI Resume Analyzer</name>
+	<description>Spring Boot backend for AI-powered resume analysis using local LLMs, PDF extraction, and pgvector-based RAG</description>
+	<url>https://github.com/yourusername/ai-resume-analyzer</url>
 	<licenses>
 		<license/>
 	</licenses>
@@ -87,6 +87,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

@@ -8,7 +8,7 @@
 <h1 align="center">📄 AI Resume Analyzer Backend</h1>
 
 <p align="center">
-  <strong>A Production-Quality, AI-Powered Resume Analysis Backend leveraging Local Vector Search, Semantics, and RAG.</strong>
+  <strong>A Spring Boot backend for analyzing resumes using local LLMs (Ollama), PDF text extraction, and vector similarity search (pgvector).</strong>
 </p>
 
 <p align="center">
@@ -28,19 +28,19 @@
 
 ## ✨ Core Pillars & Features
 
-*   📂 **PDF Text Extraction** — Uploads resume documents dynamically and extracts raw text securely using **Apache PDFBox**.
-*   ✂️ **Smart Text Chunking** — Splits parsed text into overlapping semantic boundaries to maximize LLM context accuracy and vector relevance.
-*   🧠 **Vector Embeddings** — Converts chunks into 768-dimensional dense vectors using Ollama and stores them inside **PostgreSQL + pgvector** with an optimized **HNSW index**.
-*   💬 **RAG Q&A Pipeline** — Ask complex natural language questions about candidate resumes using Retrieval-Augmented Generation context compilation.
-*   🎯 **Job Description Matching** — Calculates candidate relevance using a hybrid matching system (keyword scoring + semantic vector distance).
-*   💡 **Categorized Suggestions** — Generates detailed, categorized recommendations for resume improvements (ATS formatting, technical skills, projects, and presentation).
-*   🔒 **Duplicate Prevention** — Utilizes SHA-256 file hashing to detect and bypass processing for identical uploads.
+*   📂 **PDF Text Extraction** — Uploads PDF resumes and extracts raw text using **Apache PDFBox**.
+*   ✂️ **Text Chunking** — Splits extracted text into overlapping word-boundary windows for embedding. Overlap preserves cross-chunk context.
+*   🧠 **Vector Embeddings** — Generates embeddings via Ollama's `nomic-embed-text` model and stores them in **PostgreSQL + pgvector** with an HNSW index.
+*   💬 **RAG Q&A Pipeline** — Answer natural language questions about resumes using Retrieval-Augmented Generation with grounded context.
+*   🎯 **Job Description Matching** — Scores candidate fit using a hybrid approach: deterministic keyword overlap + semantic vector similarity + LLM qualitative analysis.
+*   💡 **Categorized Suggestions** — Generates actionable, categorized improvement recommendations (ATS formatting, skills, projects, experience).
+*   🔒 **Duplicate Prevention** — Uses SHA-256 file hashing to detect and reject identical uploads.
 
 ---
 
 ## 🏗️ Architecture & Pipeline Flow
 
-The backend orchestrates raw inputs down to persistent vector indices:
+The backend orchestrates resume processing through these layers:
 
 ```text
 HTTP Request
@@ -87,10 +87,10 @@ ollama pull llama3.2:1b
 ollama pull nomic-embed-text
 ```
 
-### 3. Spin Up Postgres + pgvector Database
-Start PostgreSQL using Docker Compose:
+### 3. Start PostgreSQL + pgvector + Redis
+Start infrastructure services using Docker Compose:
 ```bash
-docker-compose up postgres -d
+docker-compose up postgres redis -d
 ```
 
 ### 4. Run the Backend Service
@@ -107,6 +107,8 @@ mvn spring-boot:run
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
+| **`POST`** | `/api/v1/auth/signup` | Register a new user |
+| **`POST`** | `/api/v1/auth/login` | Login (returns JWT) |
 | **`POST`** | `/api/v1/resumes/upload` | Upload resume PDF |
 | **`GET`** | `/api/v1/resumes` | List resumes (paginated) |
 | **`GET`** | `/api/v1/resumes/{id}` | Get metadata |
