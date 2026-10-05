@@ -4,6 +4,7 @@ import com.example.ai_resume_analyzer.config.PromptTemplates;
 import com.example.ai_resume_analyzer.dto.ResumeSuggestionResponse;
 import com.example.ai_resume_analyzer.entity.Resume;
 import com.example.ai_resume_analyzer.exception.LlmServiceException;
+import com.example.ai_resume_analyzer.util.LlmResponseUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +58,7 @@ public class ResumeSuggestionService {
             .replace("{jobDescriptionContext}", jdContext);
 
         String rawResponse = llmClientService.complete(PromptTemplates.SUGGESTIONS_SYSTEM, userPrompt);
-        String cleaned = stripCodeFences(rawResponse);
+        String cleaned = LlmResponseUtils.stripCodeFences(rawResponse);
 
         try {
             Map<String, List<String>> categorized = objectMapper.readValue(
@@ -72,11 +73,5 @@ public class ResumeSuggestionService {
                 "Failed to parse AI suggestions. The AI model may be overloaded. Please try again.", e
             );
         }
-    }
-
-    private String stripCodeFences(String text) {
-        return text.replaceAll("(?s)```json\\s*", "")
-            .replaceAll("```", "")
-            .trim();
     }
 }

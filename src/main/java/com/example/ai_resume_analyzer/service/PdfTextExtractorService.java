@@ -26,8 +26,9 @@ public class PdfTextExtractorService {
     private static final int MIN_EXTRACTABLE_TEXT_LENGTH = 50;
 
     /**
-     * Extracts text from a PDF multipart file using streaming to avoid loading
-     * the entire file into heap memory.
+     * Extracts text from a PDF multipart file.
+     * Note: The full file is loaded into memory. Maximum file size is enforced at 10MB
+     * by the upload validation layer.
      *
      * @param file the uploaded PDF multipart file
      * @return extracted raw text content

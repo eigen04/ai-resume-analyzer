@@ -59,6 +59,10 @@ public class ResumeService {
     private final TextChunkingService textChunkingService;
     private final EmbeddingService embeddingService;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private ResumeService self;
+
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
 
     /**
@@ -70,7 +74,6 @@ public class ResumeService {
      * @throws DuplicateResumeException if a resume with the same content already exists
      * @throws ResumeProcessingException if any stage of the processing pipeline fails
      */
-    @Transactional
     public Resume uploadAndExtract(MultipartFile file) throws IOException {
         log.info("Resume upload started: fileName={}, size={} bytes",
             file.getOriginalFilename(), file.getSize());
@@ -105,6 +108,7 @@ public class ResumeService {
         resume.setStatus(ResumeStatus.UPLOADED);
         resume.setOwner(owner);
 
+        List<String> chunkTexts;
         try {
             // --- PDF extraction and normalization ---
             String rawText = pdfTextExtractorService.extractText(file);
@@ -113,40 +117,49 @@ public class ResumeService {
                 file.getOriginalFilename(), normalizedText.length());
 
             resume.setExtractedText(normalizedText);
-            resume.setStatus(ResumeStatus.TEXT_EXTRACTED);
-            resume = resumeRepository.save(resume);
-
-            // --- Chunking ---
-            List<String> chunkTexts = textChunkingService.chunkText(normalizedText);
-            log.info("Text chunked: resumeId={}, chunkCount={}", resume.getId(), chunkTexts.size());
-
-            // --- Batch chunk persistence ---
-            List<ResumeChunk> chunks = buildChunks(resume, chunkTexts);
-            resumeChunkRepository.saveAll(chunks);
-
-            // --- Embedding ---
-            embeddingService.storeChunks(resume.getId(), chunkTexts);
-
-            // --- Mark as complete ---
-            resume.setStatus(ResumeStatus.EMBEDDED);
-            resume = resumeRepository.save(resume);
-
-            log.info("Resume processing complete: resumeId={}, fileName={}, chunks={}",
-                resume.getId(), resume.getFileName(), chunkTexts.size());
-
-            return resume;
-
-        } catch (InvalidPdfException | DuplicateResumeException e) {
+            chunkTexts = textChunkingService.chunkText(normalizedText);
+            log.info("Text chunked: chunkCount={}", chunkTexts.size());
+        } catch (InvalidPdfException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Resume processing failed: fileName={}, error={}", file.getOriginalFilename(), e.getMessage(), e);
-            if (resume.getId() != null) {
-                resume.setStatus(ResumeStatus.FAILED);
-                resumeChunkRepository.deleteByResumeId(resume.getId());
-                resumeRepository.save(resume);
-            }
-            throw new ResumeProcessingException("Failed to process resume: " + file.getOriginalFilename(), e);
+            log.error("Failed to parse PDF: fileName={}, error={}", file.getOriginalFilename(), e.getMessage());
+            throw new ResumeProcessingException("Failed to extract text from PDF", e);
         }
+
+        // Phase 1: Persist Resume and Chunks (Transactional)
+        Resume savedResume = self.persistResumeAndChunks(resume, chunkTexts);
+
+        // Phase 2: Embed (Slow, Network I/O, Non-Transactional)
+        try {
+            embeddingService.storeChunks(savedResume.getId(), chunkTexts);
+            
+            // Mark as complete
+            savedResume.setStatus(ResumeStatus.EMBEDDED);
+            savedResume = resumeRepository.save(savedResume);
+            log.info("Resume processing complete: resumeId={}, fileName={}",
+                savedResume.getId(), savedResume.getFileName());
+            return savedResume;
+        } catch (Exception e) {
+            log.error("Resume embedding failed: resumeId={}, error={}", savedResume.getId(), e.getMessage());
+            savedResume.setStatus(ResumeStatus.FAILED);
+            self.cleanupFailedResume(savedResume.getId());
+            resumeRepository.save(savedResume);
+            throw new ResumeProcessingException("Failed to embed resume chunks", e);
+        }
+    }
+
+    @Transactional
+    public Resume persistResumeAndChunks(Resume resume, List<String> chunkTexts) {
+        resume.setStatus(ResumeStatus.TEXT_EXTRACTED);
+        Resume saved = resumeRepository.save(resume);
+        List<ResumeChunk> chunks = buildChunks(saved, chunkTexts);
+        resumeChunkRepository.saveAll(chunks);
+        return saved;
+    }
+
+    @Transactional
+    public void cleanupFailedResume(Long resumeId) {
+        resumeChunkRepository.deleteByResumeId(resumeId);
     }
 
     /**

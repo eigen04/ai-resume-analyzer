@@ -4,6 +4,7 @@ import com.example.ai_resume_analyzer.config.PromptTemplates;
 import com.example.ai_resume_analyzer.dto.JobMatchResponse;
 import com.example.ai_resume_analyzer.entity.Resume;
 import com.example.ai_resume_analyzer.exception.LlmServiceException;
+import com.example.ai_resume_analyzer.util.LlmResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -109,7 +110,7 @@ public class ResumeMatchService {
             .replace("{missingKeywords}", missing.size() > 20 ? missing.subList(0, 20).toString() : missing.toString());
 
         String rawResponse = llmClientService.complete(PromptTemplates.MATCH_SYSTEM, userPrompt);
-        String cleaned = stripCodeFences(rawResponse);
+        String cleaned = LlmResponseUtils.stripCodeFences(rawResponse);
 
         try {
             JobMatchResponse response = objectMapper.readValue(cleaned, JobMatchResponse.class);
@@ -152,11 +153,7 @@ public class ResumeMatchService {
             .collect(Collectors.toSet());
     }
 
-    private String stripCodeFences(String text) {
-        return text.replaceAll("(?s)```json\\s*", "")
-            .replaceAll("```", "")
-            .trim();
-    }
+
 
     private String computeMd5(String text) {
         try {

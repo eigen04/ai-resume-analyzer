@@ -69,7 +69,9 @@ public class EmbeddingService {
         SearchRequest request = SearchRequest.query(query)
             .withTopK(ragProperties.getTopK())
             .withSimilarityThreshold(ragProperties.getSimilarityThreshold())
-            .withFilterExpression("resumeId == '" + resumeId + "'");
+            .withFilterExpression(new org.springframework.ai.vectorstore.filter.FilterExpressionBuilder()
+                .eq("resumeId", String.valueOf(resumeId))
+                .build());
 
         List<Document> results = vectorStore.similaritySearch(request);
         log.debug("Found {} relevant chunks for resumeId={}", results.size(), resumeId);

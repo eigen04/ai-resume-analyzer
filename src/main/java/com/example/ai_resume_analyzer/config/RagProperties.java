@@ -1,13 +1,11 @@
 package com.example.ai_resume_analyzer.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 /**
  * Externalized configuration for RAG (Retrieval-Augmented Generation) pipeline.
  * All values are configurable via application.properties / environment variables.
  */
-@Component
 @ConfigurationProperties(prefix = "rag")
 public class RagProperties {
 
