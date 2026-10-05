@@ -31,30 +31,54 @@ public class TextChunkingService {
             return List.of();
         }
 
-        int chunkSize = ragProperties.getChunkSize();
-        int overlap = ragProperties.getChunkOverlap();
-
-        String[] words = text.trim().split("\\s+");
-        int totalWords = words.length;
-
-        if (totalWords <= chunkSize) {
-            return List.of(text.trim());
+        // 1. Try semantic splitting by common resume sections
+        String regex = "(?im)^(?=(summary|technical skills|skills|experience|employment history|work experience|projects|education|achievements)\\b)";
+        String[] sections = text.split(regex);
+        
+        List<String> chunks = new ArrayList<>();
+        for (String section : sections) {
+            String cleanSection = section.trim();
+            if (!cleanSection.isEmpty()) {
+                chunks.add(cleanSection);
+            }
         }
 
-        List<String> chunks = new ArrayList<>();
-        int start = 0;
-
-        while (start < totalWords) {
-            int end = Math.min(start + chunkSize, totalWords);
-            StringBuilder chunk = new StringBuilder();
-            for (int i = start; i < end; i++) {
-                chunk.append(words[i]);
-                if (i < end - 1) chunk.append(" ");
+        // 2. If it couldn't find sections (or found too few), fallback to paragraph splitting
+        if (chunks.size() <= 2) {
+            chunks.clear();
+            String[] paragraphs = text.split("\\n\\n+");
+            for (String p : paragraphs) {
+                String cleanP = p.trim();
+                if (!cleanP.isEmpty()) {
+                    chunks.add(cleanP);
+                }
             }
-            chunks.add(chunk.toString());
+        }
 
-            if (end == totalWords) break;
-            start = end - overlap;
+        // 3. If still not chunked properly, fallback to original sliding window word chunking
+        if (chunks.size() <= 2) {
+            chunks.clear();
+            int chunkSize = ragProperties.getChunkSize();
+            int overlap = ragProperties.getChunkOverlap();
+            String[] words = text.trim().split("\\s+");
+            int totalWords = words.length;
+
+            if (totalWords <= chunkSize) {
+                return List.of(text.trim());
+            }
+
+            int start = 0;
+            while (start < totalWords) {
+                int end = Math.min(start + chunkSize, totalWords);
+                StringBuilder chunk = new StringBuilder();
+                for (int i = start; i < end; i++) {
+                    chunk.append(words[i]);
+                    if (i < end - 1) chunk.append(" ");
+                }
+                chunks.add(chunk.toString());
+                if (end == totalWords) break;
+                start = end - overlap;
+            }
         }
 
         return chunks;

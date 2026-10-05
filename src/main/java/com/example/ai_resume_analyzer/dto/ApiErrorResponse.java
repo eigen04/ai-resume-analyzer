@@ -9,14 +9,13 @@ import java.time.LocalDateTime;
  * Returned by GlobalExceptionHandler for every error case.
  */
 public record ApiErrorResponse(
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    LocalDateTime timestamp,
+    String timestamp,
     int status,
     String errorCode,
     String message,
     String path
 ) {
     public ApiErrorResponse(int status, String errorCode, String message, String path) {
-        this(LocalDateTime.now(), status, errorCode, message, path);
+        this(java.time.LocalDateTime.now().toString(), status, errorCode, message, path);
     }
 }

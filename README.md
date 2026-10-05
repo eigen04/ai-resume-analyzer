@@ -98,9 +98,15 @@ Execute the Spring Boot application:
 ```bash
 mvn spring-boot:run
 ```
-*   **Swagger API Docs:** [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
-*   **Actuator Health Check:** [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
+### 5. Access Observability & Documentation Endpoints
+Once the application is running on port 8080, you can access the following auto-generated developer portals:
 
+*   **Swagger UI (Interactive API Docs):** [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+    *   *Provides a complete OpenAPI 3 specification and a web-based UI to test all endpoints.*
+*   **Actuator Health Check:** [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
+    *   *Returns the liveness state of the application and its connected database (useful for CI/CD readiness probes).*
+*   **Actuator Application Info:** [http://localhost:8080/actuator/info](http://localhost:8080/actuator/info)
+    *   *Returns metadata about the deployed build.*
 ---
 
 ## 💻 API Endpoints & Cheat Sheet

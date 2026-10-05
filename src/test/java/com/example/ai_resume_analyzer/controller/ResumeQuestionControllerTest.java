@@ -9,10 +9,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import com.example.ai_resume_analyzer.security.JwtAuthenticationFilter;
+import com.example.ai_resume_analyzer.config.SecurityConfig;
 import org.springframework.security.test.context.support.WithMockUser;
 import com.example.ai_resume_analyzer.repository.UserRepository;
 import com.example.ai_resume_analyzer.security.JwtTokenProvider;
@@ -30,17 +32,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests request validation, correct HTTP status codes, and response format.
  */
 @WebMvcTest(ResumeQuestionController.class)
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, SecurityConfig.class, JwtAuthenticationFilter.class})
 @WithMockUser(username = "testuser", roles = {"USER"})
 class ResumeQuestionControllerTest {
 
     @Autowired private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    @MockitoBean private ResumeQuestionService resumeQuestionService;
-    @MockitoBean private UserRepository userRepository;
-    @MockitoBean private JwtTokenProvider jwtTokenProvider;
-    @MockitoBean private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
-    @MockitoBean private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
+    @MockBean private ResumeQuestionService resumeQuestionService;
+    @MockBean private UserRepository userRepository;
+    @MockBean private JwtTokenProvider jwtTokenProvider;
+    @MockBean private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+    @MockBean private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
 
     @BeforeEach
     void setUp() {

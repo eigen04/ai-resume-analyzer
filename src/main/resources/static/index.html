@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analyzer - Test Interface</title>
+    <style>
+        /* Minimal, utilitarian style without AI aesthetic cliches */
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+        }
+        h1, h2, h3 {
+            color: #444;
+            margin-top: 0;
+        }
+        .tabs {
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            background: #eee;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .tab-btn.active {
+            background: #fff;
+            font-weight: bold;
+            border-top: 2px solid #0056b3;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        input[type="text"], input[type="password"], input[type="email"], textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            font-family: monospace;
+        }
+        textarea {
+            height: 150px;
+        }
+        button {
+            background-color: #e0e0e0;
+            color: #333;
+            border: 1px solid #999;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #d0d0d0;
+        }
+        .response-box {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            padding: 10px;
+            margin-bottom: 20px;
+            background: #e9ecef;
+            border: 1px solid #ced4da;
+            font-size: 14px;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #eee;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AI Resume Analyzer - Test Interface</h1>
+    
+    <div class="status-indicator">
+        <strong>Auth Status:</strong> <span id="auth-status">Not logged in</span>
+        <br>
+        <strong>Selected Resume ID:</strong> <span id="selected-resume">None</span>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" id="btn-auth-tab" onclick="showTab('auth-tab')">Authentication</button>
+        <button class="tab-btn" id="btn-resume-tab" style="display: none;" onclick="showTab('resume-tab')">Resume Management</button>
+        <button class="tab-btn" id="btn-ats-tab" style="display: none;" onclick="showTab('ats-tab')">ATS Scoring & Tailoring</button>
+        <button class="tab-btn" id="btn-interview-tab" style="display: none;" onclick="showTab('interview-tab')">Interview Prep</button>
+    </div>
+
+    <!-- Auth Tab -->
+    <div id="auth-tab" class="tab-content active">
+        <h2>Authentication</h2>
+        <div class="grid-2">
+            <div>
+                <h3>Login</h3>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="login-username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password">
+                </div>
+                <button onclick="login()">Login</button>
+            </div>
+            <div>
+                <h3>Signup</h3>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="signup-username">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signup-email">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signup-password">
+                </div>
+                <button onclick="signup()">Signup</button>
+            </div>
+        </div>
+        <div class="response-box" id="auth-response">Results will appear here...</div>
+    </div>
+
+    <!-- Resume Tab -->
+    <div id="resume-tab" class="tab-content">
+        <h2>Resume Management</h2>
+        
+        <h3>Upload Resume</h3>
+        <div class="form-group">
+            <input type="file" id="resume-file" accept=".pdf">
+        </div>
+        <button onclick="uploadResume()">Upload PDF</button>
+        
+        <hr>
+        
+        <h3>List Resumes</h3>
+        <button onclick="listResumes()">Fetch Resumes</button>
+        <div class="form-group" style="margin-top: 15px;">
+            <label>Set Active Resume ID for Testing:</label>
+            <input type="text" id="active-resume-id" onchange="updateActiveResume()" placeholder="e.g. 1">
+        </div>
+        
+        <div class="response-box" id="resume-response">Results will appear here...</div>
+    </div>
+
+    <!-- ATS Tab -->
+    <div id="ats-tab" class="tab-content">
+        <h2>ATS Scoring & Tailoring</h2>
+        <p>Ensure you have set an Active Resume ID in the Resume Management tab.</p>
+        
+        <div class="grid-2">
+            <div>
+                <div class="form-group">
+                    <label>Job Title / Role</label>
+                    <input type="text" id="ats-role" value="Software Engineer">
+                </div>
+                <div class="form-group">
+                    <label>Company Name</label>
+                    <input type="text" id="ats-company" value="Example Tech">
+                </div>
+                <div class="form-group">
+                    <label>Years of Experience</label>
+                    <input type="text" id="ats-yoe" value="2 years">
+                </div>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label>Job Description</label>
+                    <textarea id="ats-jd">We are looking for a Software Engineer with experience in Java, Spring Boot, and PostgreSQL. Familiarity with microservices and REST APIs is required.</textarea>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="scoreResume()">1. Get ATS Score</button>
+        <button onclick="tailorResume()">2. Generate Tailored Resume (LaTeX)</button>
+        
+        <div class="response-box" id="ats-response">Results will appear here...</div>
+    </div>
+
+    <!-- Interview Tab -->
+    <div id="interview-tab" class="tab-content">
+        <h2>Targeted Interview Prep</h2>
+        
+        <div class="form-group">
+            <label>Company Name</label>
+            <input type="text" id="int-company" value="Google">
+        </div>
+        <div class="form-group">
+            <label>Job Title</label>
+            <input type="text" id="int-title" value="Backend Software Engineer">
+        </div>
+        <div class="form-group">
+            <label>Job Description</label>
+            <textarea id="int-jd">Seeking a backend engineer with strong CS fundamentals, distributed systems knowledge, and Java experience.</textarea>
+        </div>
+        
+        <button onclick="generatePrepGuide()">Generate Prep Guide</button>
+        
+        <div class="response-box" id="interview-response">Results will appear here...</div>
+    </div>
+
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:8080/api/v1';
+    let jwtToken = null;
+    let activeResumeId = null;
+
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    function updateActiveResume() {
+        activeResumeId = document.getElementById('active-resume-id').value;
+        document.getElementById('selected-resume').innerText = activeResumeId || 'None';
+    }
+
+    function getHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        if (jwtToken) {
+            headers['Authorization'] = 'Bearer ' + jwtToken;
+        }
+        return headers;
+    }
+
+    function displayResponse(elementId, data) {
+        document.getElementById(elementId).innerText = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+    }
+
+    function revealProtectedTabs() {
+        document.getElementById('btn-resume-tab').style.display = 'inline-block';
+        document.getElementById('btn-ats-tab').style.display = 'inline-block';
+        document.getElementById('btn-interview-tab').style.display = 'inline-block';
+    }
+
+    async function login() {
+        const payload = {
+            username: document.getElementById('login-username').value,
+            password: document.getElementById('login-password').value
+        };
+        try {
+            const res = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.token) {
+                jwtToken = data.token;
+                document.getElementById('auth-status').innerText = 'Logged in as ' + data.username;
+                revealProtectedTabs();
+                showTab('resume-tab');
+            }
+            displayResponse('auth-response', data);
+        } catch (e) {
+            displayResponse('auth-response', e.toString());
+        }
+    }
+
+    async function signup() {
+        const payload = {
+            username: document.getElementById('signup-username').value,
+            email: document.getElementById('signup-email').value,
+            password: document.getElementById('signup-password').value
+        };
+        try {
+            const res = await fetch(`${API_BASE}/auth/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.token) {
+                jwtToken = data.token;
+                document.getElementById('auth-status').innerText = 'Logged in as ' + data.username;
+                revealProtectedTabs();
+                showTab('resume-tab');
+            }
+            displayResponse('auth-response', data);
+        } catch (e) {
+            displayResponse('auth-response', e.toString());
+        }
+    }
+
+    async function uploadResume() {
+        if (!jwtToken) return alert('Please login first');
+        const fileInput = document.getElementById('resume-file');
+        if (!fileInput.files[0]) return alert('Select a file');
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        
+        displayResponse('resume-response', 'Uploading and processing... This may take a minute for embeddings.');
+        
+        try {
+            const res = await fetch(`${API_BASE}/resumes/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + jwtToken },
+                body: formData
+            });
+            const data = await res.json();
+            if (data.resumeId) {
+                document.getElementById('active-resume-id').value = data.resumeId;
+                updateActiveResume();
+            }
+            displayResponse('resume-response', data);
+        } catch (e) {
+            displayResponse('resume-response', e.toString());
+        }
+    }
+
+    async function listResumes() {
+        if (!jwtToken) return alert('Please login first');
+        try {
+            const res = await fetch(`${API_BASE}/resumes?page=0&size=10`, {
+                headers: getHeaders()
+            });
+            const data = await res.json();
+            displayResponse('resume-response', data);
+        } catch (e) {
+            displayResponse('resume-response', e.toString());
+        }
+    }
+
+    async function scoreResume() {
+        if (!jwtToken) return alert('Please login first');
+        if (!activeResumeId) return alert('Please set an active resume ID');
+        
+        const payload = {
+            jobDescription: document.getElementById('ats-jd').value,
+            role: document.getElementById('ats-role').value,
+            yearsOfExperience: document.getElementById('ats-yoe').value,
+            companyName: document.getElementById('ats-company').value
+        };
+        
+        displayResponse('ats-response', 'Evaluating ATS score via LLM...');
+        try {
+            const res = await fetch(`${API_BASE}/resumes/${activeResumeId}/ats/score`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            displayResponse('ats-response', data);
+        } catch (e) {
+            displayResponse('ats-response', e.toString());
+        }
+    }
+
+    async function tailorResume() {
+        if (!jwtToken) return alert('Please login first');
+        if (!activeResumeId) return alert('Please set an active resume ID');
+        
+        const payload = {
+            jobDescription: document.getElementById('ats-jd').value,
+            role: document.getElementById('ats-role').value,
+            candidateName: 'Test Candidate',
+            email: 'test@example.com',
+            phone: '123-456-7890',
+            educationUniversity: 'Test University',
+            educationLocation: 'City, ST',
+            educationDegree: 'B.S. Computer Science',
+            educationCgpa: '3.9',
+            educationDuration: '2020 - 2024'
+        };
+        
+        displayResponse('ats-response', 'Generating tailored resume via LLM...');
+        try {
+            const res = await fetch(`${API_BASE}/resumes/${activeResumeId}/ats/tailor`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            displayResponse('ats-response', data);
+        } catch (e) {
+            displayResponse('ats-response', e.toString());
+        }
+    }
+
+    async function generatePrepGuide() {
+        if (!jwtToken) return alert('Please login first');
+        
+        const payload = {
+            companyName: document.getElementById('int-company').value,
+            jobTitle: document.getElementById('int-title').value,
+            jobDescription: document.getElementById('int-jd').value
+        };
+        
+        displayResponse('interview-response', 'Fetching interview experiences and synthesizing guide...');
+        try {
+            const res = await fetch(`${API_BASE}/interviews/prep-guide`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            displayResponse('interview-response', data);
+        } catch (e) {
+            displayResponse('interview-response', e.toString());
+        }
+    }
+</script>
+
+</body>
+</html>
